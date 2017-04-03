@@ -1,0 +1,13 @@
+Package: data.r
+Type: Package
+Title: Data Science with R - Cases
+Version: 1.0-0
+Date: 2017-04-03
+Author: Ronald Hochreiter <ron@hochreiter.net>
+Maintainer: Ronald Hochreiter <ron@hochreiter.net>
+Description: Data Science with R - Cases
+Depends:
+  R (>= 3.3)
+License: GPL-3
+URL: http://www.data-r.com/
+RoxygenNote: 6.0.1

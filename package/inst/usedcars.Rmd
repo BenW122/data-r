@@ -1,0 +1,73 @@
+---
+title: Linear Regression - Used Car Prices
+output: html_document
+---
+
+### About
+
+This example is taken from the introductory lecture on statistics at the WU Vienna University of Economics and Business (PI Statistik). The main task is to build a (linear regression) model for used car prices of one specific model of a car given the prices of many used car retailers. Furthermore, the goal is to create a price prediction model based on a given set of attributes.
+
+### Modeling
+
+First we load all required libraries. We need the library `MASS` for the step-wise variable selection at the end of this script.
+
+```{r message = FALSE, warning = FALSE}
+library(MASS)
+```
+
+Furthermore, we load the sample data from a data repository online
+
+```{r}
+load(url("http://vault.data-r.com/data/usedcars.rda"))
+```
+
+and check descriptive statistics of the data
+
+```{r}
+dim(usedcars)
+head(usedcars)
+summary(usedcars)
+```
+
+So we see that we have 100 samples with five attributes. Clearly, `price` is the one we like to predict. Now we may proceed doing an univariate linear regression using the most likely attribute influencing the price, i.e. `miles`
+
+```{r}
+result <- lm(price ~ miles, data=usedcars)
+summary(result)
+```
+
+and plot the results
+
+```{r echo = FALSE}
+plot(usedcars$miles, usedcars$price)
+abline(coefficients(result))
+```
+
+Let's try another univariate regression using `service`
+
+```{r}
+result <- lm(price ~ service, data=usedcars)
+summary(result)
+```
+
+and plot the results again
+
+```{r echo = FALSE}
+plot(usedcars$service, usedcars$price)
+abline(coefficients(result))
+```
+
+Now, let's try a multi-variate regression using all attributes
+
+```{r}
+result <- lm(price ~ miles + service + age + color, data=usedcars)
+summary(result)
+```
+
+And finally, apply a variable selection, i.e. step-wise selection (exact AIC)
+
+```{r}
+fit <- lm(price~miles+color+service+age,data=usedcars)
+step <- stepAIC(fit, direction="both")
+step$anova # display results 
+```
