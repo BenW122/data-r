@@ -1,0 +1,87 @@
+---
+title: Movie Recommendation - Collaborative Filtering
+output: html_document
+---
+
+### About
+
+The dataset used in this case is the Movielens 100k set obtained from https://grouplens.org/datasets/movielens/100k/ which contains:
+
+- 100.000 movie ratings
+- 943 raters
+- 1682 movies
+- Ratings between 1 (worst) and 5 (best)
+
+### Implementation
+
+First we load all required libraries. We need the library `recommenderlab` for everything we need in regard to collaborative filtering and recommendation engines.
+
+```{r message = FALSE, warning = FALSE}
+library(recommenderlab)
+```
+
+Furthermore, we load movie data from our data repository online. See the Appendix at the end of this file to see how the original data was imported.
+
+```{r}
+load(url("http://vault.data-r.com/data/movierecommend.rda"))
+```
+
+and check the data
+
+```{r}
+dim(movie)
+head(movie)
+dim(data)
+head(data)
+```
+
+First, build a (real-valued, 1-5) rating matrix and plot the ratings of the first 20 users on the first 20 movies
+
+```{r}
+ratings <- as(data[,1:3], "realRatingMatrix")
+image(ratings[1:20,1:20])
+```
+
+Build a user-based collaborative filtering recommender with one line
+
+```{r}
+recommender <- Recommender(ratings, method="UBCF")
+```
+
+Try recommender, i.e. get a list of ids of recommended movies
+
+```{r}
+current.user <- 7
+
+pre <- predict(recommender, current.user, data = ratings, n = 10)
+as.numeric(unlist(as(pre, "list")))
+```
+
+and map the ids to move titles
+
+```{r}
+users.recommendations <- as.character(movie$movie.title[which(movie$movie.id %in% as.numeric(unlist(as(pre, "list"))))])
+users.recommendations
+```
+
+Finally, we may take a closer list at all the movies the user rated, along with the ratings. Uncomment the line below to see the list
+
+```{r}
+users.ratings <- data.frame(movie$movie.title[data[which(data$user.id == current.user),2]], data[which(data$user.id == current.user),3])
+names(users.ratings) <- c("Movie", "Rating")
+# users.ratings
+```
+
+```{r include = FALSE}
+### Appendix: Data Import
+
+## The original data has been imported using the following code:
+# 
+# data <- read.delim("u.data", sep="\t", header=FALSE)
+# names(data) <- c("user.id", "movie.id", "rating", "timestamp")
+# 
+# movie <- read.delim("u.item", sep="|", header=FALSE)
+# names(movie) <- c("movie.id", "movie.title", "release.date", "video.release.date", "IMDb.URL", "unknown", "Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western")
+# 
+# save(data, movie, file="movierecommend.rda")
+```
