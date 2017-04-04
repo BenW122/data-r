@@ -1,0 +1,66 @@
+---
+title: Wholesale in Portugal - Clustering
+output: html_document
+---
+
+### About
+
+This data set is taken from http://archive.ics.uci.edu/ml/datasets/Wholesale+customers and contains data of a wholesale distributor in Portugal, i.e. annual spending in monetary units on diverse product categories:
+
+1) FRESH: annual spending on fresh products (Continuous)
+2) MILK: annual spending on milk products (Continuous)
+3) GROCERY: annual spending on grocery products (Continuous)
+4) FROZEN: annual spending on frozen products (Continuous)
+5) DETERGENTS_PAPER: annual spending on detergents and paper products (Continuous)
+6) DELICATESSEN: annual spending on and delicatessen products (Continuous)
+7) CHANNEL: Horeca (Hotel/Restaurant/Cafe) or Retail channel (Nominal)
+8) REGION: Lisbon, Oporto or Other (Nominal)
+
+### Implementation
+
+First, load sample data from our data repository online
+
+```{r}
+load(url("http://vault.data-r.com/data/wholesale.rda"))
+```
+
+We only use the continuous spending variables
+
+```{r}
+data <- wholesale[,3:8]
+```
+
+#### Partitional (k-Means) Clustering
+
+First, we plot a so-called scree plot to determine the amount of clusters
+
+```{r}
+max_clusters <- 15
+wss <- (nrow(data)-1)*sum(apply(data,2,var))
+for (i in 2:max_clusters) wss[i] <- sum(kmeans(data,centers=i)$withinss)
+plot(1:max_clusters, wss, type="b", xlab="Number of Clusters", ylab="Within groups sum of squares") 
+```
+
+Then we apply a standard k-means clustering
+
+```{r}
+n_cluster <- 4
+fit <- kmeans(data, n_cluster)
+
+aggregate(data, by=list(fit$cluster), FUN=mean)
+wholesale.cluster <- data.frame(wholesale, fit$cluster) 
+names(wholesale.cluster)[ncol(wholesale.cluster)] <- "Cluster"
+head(wholesale.cluster)
+```
+
+#### Hierachical Clustering
+
+```{r}
+d <- dist(data, method = "euclidean")
+fit <- hclust(d, method="ward.D")
+plot(fit)
+
+n_cluster <- 4
+groups <- cutree(fit, k=n_cluster)
+rect.hclust(fit, k=n_cluster, border="red") 
+```
