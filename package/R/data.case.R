@@ -6,6 +6,11 @@
 #' @export
 data.case <- function(case) {
   
-  file.edit(paste0(path.package("data.r"), "/", case, ".Rmd"))
+  filename_case <- paste0(path.package("data.r"), "/", case, ".Rmd")
+  if (file.exists(filename_case)) {
+    file.edit(filename_case)
+  } else {
+    warning(paste("Case", case, "is not available!"))
+  }
   
 }
