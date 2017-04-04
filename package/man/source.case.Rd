@@ -7,5 +7,5 @@
 source.case(case, output = NA, documentation = 0)
 }
 \description{
-\code{data.case} exports the R code of a given case to output
+\code{source.case} exports the R code of a given case to output
 }
