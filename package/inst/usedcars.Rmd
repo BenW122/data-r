@@ -7,7 +7,7 @@ output: html_document
 
 This example is taken from the introductory lecture on statistics at the WU Vienna University of Economics and Business (PI Statistik). The main task is to build a (linear regression) model for used car prices of one specific model of a car given the prices of many used car retailers. Furthermore, the goal is to create a price prediction model based on a given set of attributes.
 
-### Modeling
+### Implementation
 
 First we load all required libraries. We need the library `MASS` for the step-wise variable selection at the end of this script.
 
@@ -15,7 +15,7 @@ First we load all required libraries. We need the library `MASS` for the step-wi
 library(MASS)
 ```
 
-Furthermore, we load the sample data from a data repository online
+Furthermore, we load the sample data from our data repository online
 
 ```{r}
 load(url("http://vault.data-r.com/data/usedcars.rda"))

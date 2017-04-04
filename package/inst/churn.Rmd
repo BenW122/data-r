@@ -1,0 +1,69 @@
+---
+title: Electricity Customer Churn Analysis
+output: html_document
+---
+
+### About
+
+We take a look at an excerpt of customer data of a large Austrian electricity provider, which has already been slightly simplified. Two Excel-Sheets have been combined, one that contains current customers and the other one contained customers that already changed (churned) to a different provider. 
+
+### Implementation
+
+First, we load a decision tree classification library `rpart` and a library to plot decision trees, i.e. `rpart.plot`
+
+```{r message = FALSE, warning = FALSE}
+library(rpart)
+library(rpart.plot)
+```
+
+Furthermore, we load the sample data from our data repository online
+
+```{r}
+load(url("http://vault.data-r.com/data/churn.rda"))
+```
+
+Now let's take a look at the data
+
+```{r}
+head(churn)
+```
+
+We see that we have 28616 customers with 8 attributes. The attributes have been simplified and the coding scheme is as follows:
+
+| attribute | coding |
+| ---- | ----  |
+| gender | 1: female, 2: male |
+| tariff | 1: cheap, 2: medium, 3 standard |
+| term | 1: less than 2y, 2: 2y-5y, 3: more than 5y |
+| title | 0: no title, 1: any title |
+| churn | 0: current customer, 1: churned |
+
+age, consumption and zip are not encoded.
+
+Let's check some attribute distributions:
+
+```{r}
+summary(churn)
+```
+
+```{r echo = FALSE}
+hist(churn$age)
+hist(churn$consumption)
+hist(churn$consumption[which(churn$consumption < 10000)])
+barplot(table(churn$churn))
+``` 
+
+#### Creating a decision tree
+
+Creating a (decision tree) classifier is simple, i.e. a one-liner. The dependent variable is `churn`, which is a qualitative variable, which is why we cannot use standard regression models here, but the syntax is the same:
+
+```{r}
+fit <- rpart(churn ~ term + gender + title + age + consumption + tariff,
+             method="class", data=churn)
+```
+
+And check the respective decision tree:
+
+```{r echo = FALSE}
+rpart.plot(fit)
+```
