@@ -1,0 +1,59 @@
+---
+title: Association Analysis - Market Basket Analysis
+output: html_document
+---
+
+### About
+
+P. Giudici. Applied Data Mining. Wiley. 2003. Chapter 7:
+
+- 75 days between January 2nd and April 21st, 2001.
+- Southern Italy.
+- 7301 loyalty cards.
+- Average expenditure per transaction: EUR 28,27.
+- Analysis limited to 20 categories (items), only food products.
+
+### Implementation
+
+First we load all required libraries. We need the library `arules` for mining association rules and `bit64` to work with long integer values properly.
+
+```{r message = FALSE, warning = FALSE}
+library(arules)
+library(bit64)
+```
+
+Furthermore, we load the sample data from our data repository online
+
+```{r}
+load(url("http://vault.data-r.com/data/marketbasket.rda"))
+```
+
+```{r}
+head(marketbasket)
+```
+
+First, create a special transaction set out of the the list of transactions and remove duplicates.
+
+```{r}
+write.csv2(marketbasket, file="transactions.txt", row.names = FALSE)
+trans <- read.transactions("transactions.txt", format="single", sep=";", cols=c(1,2), rm.duplicates=TRUE)
+```
+
+Define minimum support and confidence:
+
+- Support indicates how frequently an itemset appears in the data.
+- Confidence indicates how often a rule was found to be true.
+
+```{r}
+support <- 0.2
+confidence <- 0.8
+```
+
+Mine rules using the Apriori algorithm and check the top 30 rules sorted by Confidence.
+
+```{r}
+rules <- apriori(trans, parameter = list(supp = support, conf = confidence, target = "rules"))
+inspect(head(rules, n = 30, by = "confidence"))
+```
+
+The lift of a rule is defined as the ratio of the observed support which is expected if X and Y were independent. The higher its value the more the two occurrences are dependent on one another, i.e. rules with a higher lift are potentially more useful for predictions.
