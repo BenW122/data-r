@@ -1,0 +1,56 @@
+---
+title: Clustering European Demography Data
+output: html_document
+---
+
+### About
+
+We use European demography data to test hierarchical clustering methods.
+
+### Implementation
+
+First, we load a special clustering library `cluster` although R already provides clustering in its base function set.
+
+```{r message = FALSE, warning = FALSE}
+library(cluster)
+```
+
+Furthermore, we load the sample data from our data repository online
+
+```{r}
+load(url("http://vault.data-r.com/data/demography.rda"))
+```
+
+```{r}
+dim(demography)
+names(demography)
+demography$Country
+head(demography)
+```
+
+Let's plot two parameters and select the fertility rate as well as the annual net migrationrate.
+
+```{r echo = FALSE}
+plot(demography$Fertilityrate, demography$Annualnetmigrationrate, 
+     xlim=c(1,2.2), xlab="Fertility rate", ylab="Annual net migration rate")
+textpos <- rep(4, 27)
+textpos[8] <- textpos[10] <- textpos[20] <- textpos[21] <- 2
+text(demography$Fertilityrate, demography$Annualnetmigrationrate, 
+     demography$Country, pos=textpos, cex=0.7)
+```
+
+Now cluster the countries regarding these two attributes (fertility rate / annual net migrationrate) and plot the result.
+
+```{r}
+data <- na.omit(demography[, 1:4])
+clustering <- agnes(data[, 3:4], stand = TRUE)
+pltree(clustering, main='Hierarchical Clustering', sub="", xlab='EU Countries', labels=data$Code)
+```
+
+Transpose the data set and cluster: Demography-Variables
+
+```{r}
+data <- na.omit(demography)[, 3:19]
+clustering <- agnes(t(data), stand = TRUE)
+pltree(clustering, main="", sub="", xlab='Demography parameters')
+```
