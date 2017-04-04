@@ -2,12 +2,12 @@ Package: data.r
 Type: Package
 Title: Data Science with R - Cases
 Version: 1.0-0
-Date: 2017-04-03
+Date: 2017-04-04
 Author: Ronald Hochreiter <ron@hochreiter.net>
 Maintainer: Ronald Hochreiter <ron@hochreiter.net>
 Description: Data Science with R - Cases
-Depends:
-  R (>= 3.3)
+Depends: R (>= 3.3)
+Imports: cluster, rpart, rpart.plot, arules, bit64, MASS, knitr, rmarkdown
 License: GPL-3
 URL: http://www.data-r.com/
 RoxygenNote: 6.0.1
