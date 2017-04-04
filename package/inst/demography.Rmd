@@ -54,3 +54,7 @@ data <- na.omit(demography)[, 3:19]
 clustering <- agnes(t(data), stand = TRUE)
 pltree(clustering, main="", sub="", xlab='Demography parameters')
 ```
+
+#### References
+
+- R. Hatzinger, K. Hornik, H. Nagel. R - Einführung durch angewandte Statistik. Pearson Studium. 2011. Chapter 12.
