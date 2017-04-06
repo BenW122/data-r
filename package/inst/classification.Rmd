@@ -1,0 +1,94 @@
+---
+title: Classification - Training and Test Set, Repeated Experiments
+output: html_document
+---
+  
+Libraries
+
+```{r message = FALSE, warning = FALSE}
+library(rpart) # Decision Trees
+library(C50) # Decision Trees & Classification Rules
+library(randomForest) # Random Forests
+library(e1071) # Naive Bayes & Support Vector Machines
+```
+
+Data & Parameters
+
+```{r}
+data(iris)
+dataset <- iris
+
+training_set_size <- 0.8 # size of the training set, size of test set = 1 - this value
+pos_class <- 5 # column of class attribute
+```
+
+Helper variables and a function to determine accuracy of a fit
+
+```{r}
+set_size <- nrow(dataset)
+training_set_size_n <- round(set_size * training_set_size)
+test_set_size_n <- set_size - training_set_size_n
+
+classification_accuracy <- function(fit, test_data, pos_class) {
+  prediction <- predict(fit, test_data[,-pos_class], type="class")
+  result <- data.frame(test_data[,pos_class], prediction)
+  names(result) <- c("data", "prediction")
+  t <- table(result$data, result$prediction)
+  misclassified <- sum(t)-sum(diag(t))
+  accuracy <- (nrow(test_data)-misclassified)/nrow(test_data)
+  return(accuracy)
+}
+```
+
+Do a single run to compare methods (manually and step-by-step)
+
+```{r}
+# Randomly select training and test set positions
+training_set_pos <- sample(set_size, training_set_size_n)
+test_set_pos <- setdiff(1:set_size, training_set_pos)
+
+# Try various classification methods and check their accuracy
+fit <- rpart(Species ~ ., data=dataset[training_set_pos,])
+classification_accuracy(fit, dataset[test_set_pos,], pos_class)
+
+fit <- C5.0(Species ~ ., data=dataset[training_set_pos,])
+classification_accuracy(fit, dataset[test_set_pos,], pos_class)
+
+fit <- randomForest(Species ~ ., data=dataset[training_set_pos,])
+classification_accuracy(fit, dataset[test_set_pos,], pos_class)
+
+fit <- naiveBayes(Species ~ ., data=dataset[training_set_pos,])
+classification_accuracy(fit, dataset[test_set_pos,], pos_class)
+
+fit <- svm(Species ~ ., data=dataset[training_set_pos,])
+classification_accuracy(fit, dataset[test_set_pos,], pos_class)
+```
+
+Repeat trials and analyze statistical properties of accuracy over the trials
+
+```{r}
+trials <- 20 # number of trials
+
+classification_methods <- c("rpart", "C5.0", "randomForest", "naiveBayes", "svm")
+performance <- matrix(rep(NA, trials * length(classification_methods)), nrow=length(classification_methods))
+
+for(trial in 1:trials) {
+  training_set_pos <- sample(set_size, training_set_size_n)
+  test_set_pos <- setdiff(1:set_size, training_set_pos)
+  
+  for(i in 1:length(classification_methods)) {
+    fit <- do.call(classification_methods[i], list(Species ~ ., data=dataset[training_set_pos,]))
+    performance[i, trial] <- classification_accuracy(fit, dataset[test_set_pos,], pos_class)
+  }
+}
+
+# Summarize results
+
+df.accuracy <- data.frame(rowMeans(performance), apply(performance, 1, sd))
+names(df.accuracy) <- c("mean", "stdev")
+row.names(df.accuracy) <- classification_methods
+
+# Check results - the higher the mean and lower the standard deviation the better
+
+df.accuracy
+```
