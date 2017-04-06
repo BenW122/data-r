@@ -1,0 +1,138 @@
+---
+title: Online Retailer Analysis
+output: html_document
+---
+
+### About
+
+Online Retail Data Set - a transnational data set which contains all the transactions occurring between 01/12/2010 and 09/12/2011 for a UK-based and registered non-store online retail. The company mainly sells unique all-occasion gifts. Many customers of the company are wholesalers.
+
+https://archive.ics.uci.edu/ml/datasets/Online+Retail
+
+- InvoiceNo: Invoice number. Nominal, a 6-digit integral number uniquely assigned to each transaction. If this code starts with letter 'c', it indicates a cancellation.
+- StockCode: Product (item) code. Nominal, a 5-digit integral number uniquely assigned to each distinct product.
+- Description: Product (item) name. Nominal.
+- Quantity: The quantities of each product (item) per transaction. Numeric.
+- InvoiceDate: Invice Date and time. Numeric, the day and time when each transaction was generated.
+- UnitPrice: Unit price. Numeric, Product price per unit in sterling.
+- CustomerID: Customer number. Nominal, a 5-digit integral number uniquely assigned to each customer.
+- Country: Country name. Nominal, the name of the country where each customer resides.
+
+#### Literature
+
+- Daqing Chen, Sai Liang Sain, and Kun Guo, Data mining for the online retail industry: A case study of RFM model-based customer segmentation using data mining, Journal of Database Marketing and Customer Strategy Management, Vol. 19, No. 3, pp. 197-208, 2012.
+
+### Implementation
+
+Libraries
+
+```{r message = FALSE, warning = FALSE}
+library(stringr)
+library(arules)
+library(tidyverse)
+library(cluster)
+library(rpart)
+library(rpart.plot)
+library(recommenderlab)
+```
+
+Load and preprocess Online Retail Data
+
+```{r}
+load(url("http://vault.data-r.com/data/onlineretail.rda"))
+dataset <- onlineretail
+
+### Split Date and Time
+
+Day <- as.Date(substr(dataset$InvoiceDate,1, 8), "%d/%m/%y")
+Time <- substr(as.character(dataset$InvoiceDate), 10, 14)
+
+dataset <- cbind(dataset, Day, Time)
+
+### Keep only UK
+
+pos_uk <- which(dataset$Country == "United Kingdom")
+dataset <- dataset[pos_uk,]
+```
+
+Create RMF Dataset per CustomerID
+
+```{r}
+dataset <- as_tibble(dataset)
+dataset$UnitPrice <- as.numeric(str_replace(dataset$UnitPrice, ",", "."))
+
+RMFAnalysis <- summarise(group_by(dataset, CustomerID), 
+                         Frequency = n(), 
+                         Recency.date = max(Day),
+                         Monetary.mean = mean(Quantity * UnitPrice, na.rm = TRUE), 
+                         Monetary.sum = sum(Quantity * UnitPrice, na.rm = TRUE))
+
+RMFAnalysis <- cbind(RMFAnalysis, max(RMFAnalysis$Recency.date) - RMFAnalysis$Recency.date)
+names(RMFAnalysis)[ncol(RMFAnalysis)] <- "Recency"
+
+### Remove some problematic Customers 
+
+pos_problem <- c(which(RMFAnalysis$Monetary.mean <= 0), 
+                 which(RMFAnalysis$Monetary.sum <= 0),
+                 which(RMFAnalysis$Monetary.sum >= quantile(RMFAnalysis$Monetary.sum, 0.99)))
+
+RMFAnalysis <- na.omit(RMFAnalysis[-pos_problem,])
+
+RMFAnalysis.select <- RMFAnalysis[,c(2,5,6)]
+RMFAnalysis.scale <- data.frame(as.numeric(scale(RMFAnalysis.select[,1])), 
+                                as.numeric(scale(RMFAnalysis.select[,2])), 
+                                as.numeric(scale(RMFAnalysis.select[,3])))  
+
+# Correlations
+
+cor(as.numeric(RMFAnalysis$Recency), RMFAnalysis$Frequency)
+cor(as.numeric(RMFAnalysis$Frequency), RMFAnalysis$Monetary.mean)
+```
+
+Analysis for e.g. 4-6 clusters (customer groups)
+
+```{r}
+clusters <- 4
+
+fit <- kmeans(RMFAnalysis.scale, clusters)
+print(aggregate(RMFAnalysis.select, by=list(fit$cluster), FUN=mean))
+
+RMFAnalysis <- data.frame(RMFAnalysis, fit$cluster)
+
+for(cluster in 1:clusters) {
+  cluster_data <- RMFAnalysis[which(RMFAnalysis$fit.cluster==cluster),]
+  
+  ### Classification / Decision Trees
+  
+  fit <- rpart(Monetary.sum ~ Frequency + Recency, data=cluster_data)
+  rpart.plot(fit)
+
+  ### Association Rules
+  
+  pos_transaction <- which(dataset$CustomerID %in%
+                           RMFAnalysis$CustomerID[which(RMFAnalysis$fit.cluster==cluster)])
+  write.csv2(dataset[pos_transaction,], file="transactions.txt", row.names = FALSE)
+  trans <- read.transactions("transactions.txt", format="single", sep=";", cols=c(1,3), rm.duplicates=TRUE)
+  
+  support <- 0.03
+  confidence <- 0.5
+  
+  rules <- apriori(trans, parameter = list(supp = support, conf = confidence, target = "rules"))
+  if(length(rules) > 0) { inspect(head(rules, n = 30, by = "confidence")) }
+}
+```
+
+User-based Collaborative Filtering
+
+```{r}
+onlineretail.clean <- na.omit(onlineretail)
+
+products <- as(data.frame(onlineretail.clean[,c(7, 2)]), "binaryRatingMatrix")
+image(products[1:20,1:20])
+
+recommender <- Recommender(products, method="POPULAR")
+
+# Create recommendations using user ids with ids 1..10 in the training data
+pre <- predict(recommender, 1:10, data = products, n = 10)
+as(pre, "list")
+```
