@@ -1,13 +1,13 @@
 Package: data.r
 Type: Package
 Title: Data Science with R - Cases
-Version: 1.0-1
-Date: 2017-04-06
-Author: Ronald Hochreiter <ron@hochreiter.net>
-Maintainer: Ronald Hochreiter <ron@hochreiter.net>
+Version: 1.0-2
+Date: 2017-09-14
+Author: Ronald Hochreiter <ron@data-r.com>
+Maintainer: Ronald Hochreiter <ron@data-r.com>
 Description: Data Science with R - Cases
 Depends: R (>= 3.3)
-Imports: cluster, rpart, rpart.plot, arules, bit64, MASS, knitr, 
+Imports: cluster, rpart, rpart.plot, arules, bit64, MASS, knitr, ElemStatLearn,
   rmarkdown, recommenderlab, tidyverse, stringr, C50, randomForest, e1071
 License: GPL-3
 URL: http://www.data-r.com/
