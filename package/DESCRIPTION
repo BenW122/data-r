@@ -9,7 +9,7 @@ Description: Data Science with R - Cases
 Depends: R (>= 3.3)
 Imports: cluster, rpart, rpart.plot, arules, bit64, MASS, knitr, ElemStatLearn,
   rmarkdown, recommenderlab, tidyverse, stringr, C50, randomForest, e1071, mlr,
-  rela, psych
+  rela, psych, randomForestSRC, xgboost, gbm
 License: GPL-3
 URL: http://www.data-r.com/
 RoxygenNote: 6.0.1
