@@ -13,21 +13,26 @@ library(recommenderlab)
 load(url("http://vault.data-r.com/data/onlineretail.rda"))
 dataset <- onlineretail
 
-### Split Date and Time
+### Data cleansing & selection
+
+# Split Date and Time
 
 Day <- as.Date(substr(dataset$InvoiceDate,1, 8), "%d/%m/%y")
 Time <- substr(as.character(dataset$InvoiceDate), 10, 14)
 
 dataset <- cbind(dataset, Day, Time)
 
-### Keep UK only
+# Keep UK only
 
 pos_uk <- which(dataset$Country == "United Kingdom")
 dataset <- dataset[pos_uk,]
+
+# Convert data.frame to tibble and do some string replacements (price)
+
 dataset <- as_tibble(dataset)
 dataset$UnitPrice <- as.numeric(str_replace(dataset$UnitPrice, ",", "."))
 
-# RMF Analysis (Recency-Monetary-Frequency)
+### RMF Analysis (Recency-Monetary-Frequency)
 
 RMFAnalysis <- summarise(group_by(dataset, CustomerID), 
                          Frequency = n(), 
@@ -38,7 +43,7 @@ RMFAnalysis <- summarise(group_by(dataset, CustomerID),
 RMFAnalysis <- cbind(RMFAnalysis, max(RMFAnalysis$Recency.date) - RMFAnalysis$Recency.date)
 names(RMFAnalysis)[ncol(RMFAnalysis)] <- "Recency"
 
-### Remove some problematic Customers 
+# Data cleansing: remove some problematic customers (from RMF set)
 
 pos_problem <- c(which(RMFAnalysis$Monetary.mean <= 0), 
                  which(RMFAnalysis$Monetary.sum <= 0),
@@ -46,12 +51,14 @@ pos_problem <- c(which(RMFAnalysis$Monetary.mean <= 0),
 
 RMFAnalysis <- na.omit(RMFAnalysis[-pos_problem,])
 
+# Select attributes for RMF clustering
+
 RMFAnalysis.select <- RMFAnalysis[,c(2,5,6)]
 RMFAnalysis.scale <- data.frame(as.numeric(scale(RMFAnalysis.select[,1])), 
                                 as.numeric(scale(RMFAnalysis.select[,2])), 
                                 as.numeric(scale(RMFAnalysis.select[,3])))  
 
-### Descriptive: Correlations
+# Descriptive: Correlations
 
 cor(as.numeric(RMFAnalysis$Recency), RMFAnalysis$Frequency)
 cor(as.numeric(RMFAnalysis$Frequency), RMFAnalysis$Monetary.mean)
@@ -67,22 +74,24 @@ plot(1:max_clusters, wss, type="b", xlab="Number of Clusters", ylab="Within grou
 
 # Analysis per Cluster
 
-clusters <- 4
+clusters <- 4 # manually chosen from scree plot
 
 fit <- kmeans(RMFAnalysis.scale, clusters)
 print(aggregate(RMFAnalysis.select, by=list(fit$cluster), FUN=mean))
 
 RMFAnalysis <- data.frame(RMFAnalysis, fit$cluster)
 
+### Do an analysis per customer group
+
 for(cluster in 1:clusters) {
   cluster_data <- RMFAnalysis[which(RMFAnalysis$fit.cluster==cluster),]
   
-  ### Classification / Decision Trees
+  # Classification / Decision Trees
   
   fit <- rpart(Monetary.sum ~ Frequency + Recency, data=cluster_data, method="anova")
   rpart.plot(fit)
   
-  ### Association Rules
+  # Association Rules
   
   pos_transaction <- which(dataset$CustomerID %in%
                            RMFAnalysis$CustomerID[which(RMFAnalysis$fit.cluster==cluster)])
@@ -95,13 +104,24 @@ for(cluster in 1:clusters) {
   rules <- apriori(trans, parameter = list(supp = support, conf = confidence, target = "rules"))
   if(length(rules) > 0) { inspect(head(rules, n = 30, by = "confidence")) }
 }
+
+### Recommender Engine
+
+# Data cleansing
+
 onlineretail.clean <- na.omit(onlineretail)
+
+# Create binary "rating" matrix
 
 products <- as(data.frame(onlineretail.clean[,c(7, 2)]), "binaryRatingMatrix")
 image(products[100:200,1:200])
 
+# Compute a recommender
+
 recommender <- Recommender(products, method="POPULAR")
 
 # Create recommendations using user ids with ids 1..10 in the training data
+
 pre <- predict(recommender, 1:10, data = products, n = 10)
-as(pre, "list")
+print(as(pre, "list"))
+u1 <- as(pre, "list")[[1]]
