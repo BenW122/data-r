@@ -1,15 +1,15 @@
 Package: data.r
 Type: Package
 Title: Data Science with R - Cases
-Version: 1.0-6
-Date: 2017-10-03
+Version: 1.0-7
+Date: 2017-10-04
 Author: Ronald Hochreiter <ron@data-r.com>
 Maintainer: Ronald Hochreiter <ron@data-r.com>
 Description: Data Science with R - Cases
 Depends: R (>= 3.3)
 Imports: cluster, rpart, rpart.plot, arules, bit64, MASS, knitr, ElemStatLearn,
   rmarkdown, recommenderlab, tidyverse, stringr, C50, randomForest, e1071, mlr,
-  rela, psych, randomForestSRC, xgboost, gbm
+  rela, psych, randomForestSRC, xgboost, gbm, purrr, lubridate, quantmod, magrittr
 License: GPL-3
 URL: http://www.data-r.com/
 RoxygenNote: 6.0.1
