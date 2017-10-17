@@ -1,8 +1,8 @@
 Package: data.r
 Type: Package
 Title: Data Science with R - Cases
-Version: 1.0-9
-Date: 2017-10-10
+Version: 1.0-10
+Date: 2017-10-17
 Author: Ronald Hochreiter <ron@data-r.com>
 Maintainer: Ronald Hochreiter <ron@data-r.com>
 Description: Data Science with R - Cases
